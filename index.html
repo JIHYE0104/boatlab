@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boat Lab — 영수증과 보증 정보를 쉽고 편리하게</title>
+<meta name="description" content="영수증과 보증 정보를 쉽고 편리하게 관리하는 AI 서비스, 보트랩">
+
+<!-- Pretendard 폰트 (한글 웹폰트) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+
+<style>
+  /* ============================================================
+     ① 색상 설정
+     ============================================================ */
+  :root {
+    --section-bg: #F2F7FF;  /* 전 섹션 공통 배경색 */
+    --brand:      #2f80ff;  /* 버튼/포인트 컬러 */
+    --brand-dark: #1f66db;
+    --text:       #1c2733;
+    --text-sub:   #5b6b7d;
+    --line:       #dde4ee;  /* 인풋 테두리 */
+    --divider:    #d5d9d8;  /* 섹션 구분선 */
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation: none !important; transition: none !important; }
+  }
+
+  body {
+    font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+                 system-ui, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color: var(--text);
+    background: var(--section-bg);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============================================================
+     ② 섹션 공통
+     - 이미지는 원본 비율 그대로 (잘림 없음)
+     - 전 섹션 배경: #F2F7FF
+     - 섹션마다 하단에 #D5D9D8 구분선
+     ============================================================ */
+  .section {
+    width: 100%;
+    background: var(--section-bg);
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .section img {
+    display: block;
+    width: 100%;
+    height: auto;            /* 비율 유지 = 잘림 없음 */
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* ============================================================
+     ③ 사전 예약 폼 (내용 구상 시안 기준)
+     ============================================================ */
+  .signup-form-wrap {
+    padding: 12px 24px 110px;
+  }
+
+  .signup-form {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 14px 16px;
+    font: inherit;
+    font-size: 15px;
+    color: var(--text);
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input::placeholder { color: #a9b6c6; }
+  .field input:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(47,128,255,.15);
+  }
+
+  /* 개인정보 수집 및 이용 동의 안내 박스 */
+  .privacy-box {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .privacy-box strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .privacy-box p {
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.55;
+  }
+
+  /* 동의 체크박스 */
+  .consent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+  .consent input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--brand);
+    cursor: pointer;
+  }
+
+  /* CTA 버튼 */
+  .cta-btn {
+    width: 100%;
+    padding: 16px;
+    font: inherit;
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    background: var(--brand);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .cta-btn:hover  { background: var(--brand-dark); }
+  .cta-btn:active { transform: scale(.98); }
+  .cta-btn:disabled { opacity: .6; cursor: wait; }
+  .cta-btn:focus-visible,
+  .field input:focus-visible,
+  .consent input:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+  }
+
+  .form-message {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 24px;
+  }
+  .form-message.ok    { color: #1a7f4e; }
+  .form-message.error { color: #d64545; }
+
+  /* 스팸봇 방지용 숨김 필드 */
+  .hp { position: absolute; left: -9999px; opacity: 0; }
+
+  /* ============================================================
+     ④ 푸터
+     ============================================================ */
+  footer {
+    background: var(--section-bg);
+    text-align: center;
+    padding: 24px 24px 48px;
+    color: var(--text-sub);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 표지 -->
+  <section class="section">
+    <img src="표지.png" alt="" loading="eager">
+  </section>
+
+  <!-- 보보 인사 소개 -->
+  <section class="section">
+    <img src="1.png" alt="" loading="lazy">
+  </section>
+
+  <!-- 이런 분들께 추천해요 -->
+  <section class="section">
+    <img src="2.png" alt="" loading="lazy">
+  </section>
+
+  <!-- Step 1 ~ 4 -->
+  <section class="section">
+    <img src="3.png" alt="" loading="lazy">
+  </section>
+
+  <section class="section">
+    <img src="4.png" alt="" loading="lazy">
+  </section>
+
+  <section class="section">
+    <img src="5.png" alt="" loading="lazy">
+  </section>
+
+  <section class="section">
+    <img src="6.png" alt="" loading="lazy">
+  </section>
+
+  <!-- 이메일 등록 안내 + 사전 예약 폼 -->
+  <section class="section" id="signup">
+    <img src="7.png" alt="" loading="lazy">
+
+    <div class="signup-form-wrap">
+      <form class="signup-form" id="reserveForm" novalidate>
+        <label class="hp" aria-hidden="true">
+          이 칸은 비워두세요 <input type="text" name="company" tabindex="-1" autocomplete="off">
+        </label>
+
+        <div class="field">
+          <label for="nameInput">Name</label>
+          <input type="text" name="name" id="nameInput"
+                 placeholder="이름을 입력해주세요."
+                 required autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="emailInput">Email</label>
+          <input type="email" name="email" id="emailInput"
+                 placeholder="이메일을 입력해주세요."
+                 required autocomplete="email" inputmode="email">
+        </div>
+
+        <div class="privacy-box">
+          <strong>개인정보 수집 및 이용 동의</strong>
+          <p>입력하신 정보는 서비스 출시 안내 및 사전 신청 관련 안내를 위해서만 사용되며,
+             목적 달성 후 안전하게 파기됩니다.</p>
+        </div>
+
+        <label class="consent">
+          <input type="checkbox" id="consentCheck">
+          개인 정보 수집 및 이용동의
+        </label>
+
+        <button type="submit" class="cta-btn" id="submitBtn">사전 예약하기</button>
+
+        <p class="form-message" id="formMessage" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Boat Lab. All rights reserved.
+  </footer>
+
+<script>
+/* ================================================================
+   사전 예약 → 구글 시트 연동
+   아래 SCRIPT_URL 자리에 Google Apps Script 배포 URL을 붙여넣으세요.
+   ================================================================ */
+const SCRIPT_URL = "여기에_구글_앱스_스크립트_URL_붙여넣기";
+
+const form = document.getElementById("reserveForm");
+const nameInput = document.getElementById("nameInput");
+const emailInput = document.getElementById("emailInput");
+const consent = document.getElementById("consentCheck");
+const btn = document.getElementById("submitBtn");
+const msg = document.getElementById("formMessage");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  msg.textContent = "";
+  msg.className = "form-message";
+
+  // 스팸봇이 숨김 필드를 채웠으면 조용히 무시
+  if (form.company.value) return;
+
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+
+  if (!name) {
+    msg.textContent = "이름을 입력해주세요.";
+    msg.classList.add("error");
+    nameInput.focus();
+    return;
+  }
+
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!valid) {
+    msg.textContent = "올바른 이메일 주소를 입력해주세요.";
+    msg.classList.add("error");
+    emailInput.focus();
+    return;
+  }
+
+  if (!consent.checked) {
+    msg.textContent = "개인정보 수집 및 이용에 동의해주세요.";
+    msg.classList.add("error");
+    return;
+  }
+
+  if (SCRIPT_URL.startsWith("여기에")) {
+    msg.textContent = "아직 저장소(구글 시트)가 연결되지 않았어요. 가이드의 3단계를 완료해주세요.";
+    msg.classList.add("error");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "예약 중...";
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ name: name, email: email, date: new Date().toISOString() })
+    });
+    msg.textContent = "사전 예약 완료! 소식이 준비되면 가장 먼저 알려드릴게요 🎉";
+    msg.classList.add("ok");
+    form.reset();
+  } catch (err) {
+    msg.textContent = "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
+    msg.classList.add("error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "사전 예약하기";
+  }
+});
+</script>
+
+</body>
+</html>
